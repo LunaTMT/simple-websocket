@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask WebSocket Example</title>
+</head>
+<body>
+    <h1>Hello, this is your WebSocket app</h1>
+
+    <div id="chat">
+        <ul id="messages"></ul>
+        <input id="message_input" autocomplete="off" /><button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script type="text/javascript">
+        var userId = localStorage.getItem('user_id');
+        var socket = io.connect('http://' + document.domain + ':' + location.port, { query: { userId } });
+    
+        socket.on('connect', function () {
+            if (!userId) {
+                userId = socket.id;  // Use socket ID as a temporary user ID
+                localStorage.setItem('user_id', userId);
+            }
+        });
+    
+        socket.on('message', function (data) {
+            var ul = document.getElementById('messages');
+            var li = document.createElement('li');
+            li.appendChild(document.createTextNode(data.userId + " : " + data.message)); // Display the 'message' property
+            ul.appendChild(li);
+        });
+    
+        function sendMessage() {
+            var messageInput = document.getElementById('message_input');
+            var message = messageInput.value;
+            socket.emit('message', { userId,  message });
+            messageInput.value = '';
+        }
+    
+        // Request chat history when connected
+        socket.on('chat_history', function (history) {
+            var ul = document.getElementById('messages');
+            ul.innerHTML = ''; // Clear existing messages
+            history.forEach(function (data) {
+                var li = document.createElement('li');
+                li.appendChild(document.createTextNode(data.userId + " : " + data.message)); // Display the 'message' property
+                ul.appendChild(li);
+            });
+        });
+    </script>
+    
+</body>
+</html>
